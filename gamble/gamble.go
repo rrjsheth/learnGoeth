@@ -48,12 +48,11 @@ func TransferTokens(client *ethclient.Client, privateSourceAddr string, publicDe
     log.Fatal(err)
   }
 
-  /*
+  fmt.Println(signedTx)
   err = client.SendTransaction(context.Background(), signedTx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Printf("Sent %s wei to %s: %s\n", value.String(), toAddress.Hex(), signedTx.Hash().Hex())
-  */
 }
