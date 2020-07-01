@@ -14,9 +14,11 @@ import (
   "github.com/ethereum/go-ethereum/ethclient"
 )
 type accountKeys struct {
-  public string
-  private string
+  Public string
+  Private string
 }
+
+
 func main()  {
   args := os.Args[1:]
 
@@ -28,7 +30,7 @@ func main()  {
   playerTwoKeys := accountKeys{args[2], args[3][2:]}
   fmt.Println(playerOneKeys)
   fmt.Println(playerTwoKeys)
-  
+
   fmt.Println("Player 1: How many tokens would you like to bet?")
   var amount string
   _, err := fmt.Scanln(&amount)
@@ -68,3 +70,21 @@ func main()  {
   fmt.Println("balance of player 1", balance.Balance(client, playerOneKeys.public))
   fmt.Println("balance of player 2", balance.Balance(client, playerTwoKeys.public))
 }
+
+/*jsonFile, err := os.Open("player_keys.json")
+// if we os.Open returns an error then handle it
+if err != nil {
+    fmt.Println(err)
+}
+fmt.Println("Successfully Opened users.json")
+// defer the closing of our jsonFile so that we can parse it later on
+defer jsonFile.Close()
+
+byteValue, _ := ioutil.ReadAll(jsonFile)
+var objmap map[string]json.RawMessage
+err = json.Unmarshal(byteValue, &objmap)
+fmt.Println(objmap)
+var s privateKeys
+err = json.Unmarshal(objmap["private_keys"], &s)
+fmt.Println(s)
+*/
