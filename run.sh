@@ -6,3 +6,7 @@ PLAYERTWOPRIVATE="0xd21d6b5fcc6d67e02d1dc18a15daf744446f35d9f6b9dc44a48cf1965719
 # ganache-cli --accounts 2 --acctKeys ./player_keys.json
 # rm ./player_keys.json
 go run main.go $PLAYERONEPUBLIC $PLAYERONEPRIVATE $PLAYERTWOPUBLIC $PLAYERTWOPRIVATE
+
+
+#curl -XPOST -d'{"gameNumber":0}' localhost:8080/infoGame
+#curl -XPOST -d'{"transactionHash":"1","playerId":"31212","gameNumber":0}' localhost:8080/joinGame

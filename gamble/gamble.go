@@ -19,8 +19,10 @@ func GetTransactionInfo(client *ethclient.Client, transactionHash string) ( amou
   }
 
   amountTransferred = transactionDetails.Value()
-  senderAddress = transactionDetails.To() // transactionDetails.From()
   receiverAddress = transactionDetails.To()
+  if msg, err := transactionDetails.AsMessage(types.HomesteadSigner{}); err == nil {
+    senderAddress = msg.From()
+  }
   fmt.Println("transaction pending?", isPending)
   return
 }

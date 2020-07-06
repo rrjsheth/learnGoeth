@@ -1,12 +1,12 @@
 // this file should only contain the interface
 package gameLogic
-// 
+//
 // import (
 //   "errors"
 // )
 
 type PokerGameService interface {
-  // JoinPokerGame(string, string, string) string
+  JoinPokerGame(string, string, int) string
   InfoPokerGame(int) (string, int, int, error)
   // Raise(int, string, int) string
   // Call() ()

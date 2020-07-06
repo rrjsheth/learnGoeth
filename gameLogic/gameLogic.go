@@ -2,7 +2,7 @@
 package gameLogic
 
 import (
-  "fmt"
+//  "fmt"
   "log"
   "math/rand"
   "time"
@@ -70,33 +70,38 @@ func (s PokerService) InfoPokerGame(gameNumber int) (string, int, int, error) {
 // check if the user has paid his buy in to get into the game
 // what is the player's id
 // need to return the hand to start playing, the other has to be errors to return
-// func (s PokerService) JoinPokerGame(buyInTransactionHash string, playerId string, gameNumber string) string {
-//   game := getGame(gameNumber)
-//   if game == nil {
-//     fmt.Println("did nto find that game; number provided does not exist", gameNumber)
-//     return "did nto find that game; number provided does not exist" + strconv.Itoa(gameNumber)
-//   }
-//
-//   deck := hand.NewDealer(rand.New(rand.NewSource(time.Now().UnixNano()))).Deck()
-// 	dealtHand := hand.New(deck.PopMulti(5))
-// 	fmt.Println(dealtHand)
-//   return dealtHand
-//
-//   amountTransferred, senderAddress, receiverAddress := gamble.GetTransactionInfo(globalEthClient, buyInTransactionHash)
-//   if amountTransferred < game.buyInAmount {
-//     fmt.Println("did not pay enough money to get into game")
-//     return "did not pay enough money to get into game"
-//   } else if senderAddress == playerId {
-//     fmt.Println("player id did not match id of payer of buyin")
-//     return "player id did not match id of payer of buyin"
-//   } else if receiverAddress == game.casinoAccountNumber {
-//     fmt.Println("did not send money to the right account")
-//     return "did not send money to the right account"
-//   }
-//
-//   game.players = append(game.players, PlayerMetaData{playerId, amountTransferred})
-//   return "successfully joined game"
-// }
+func (s PokerService) JoinPokerGame(buyInTransactionHash string, playerId string, gameNumber int) (string, error) {
+  game := getGame(gameNumber)
+  if game == nil {
+    log.Println("did nto find that game; number provided does not exist", gameNumber)
+    return "", errors.New("did nto find that game; number provided does not exist" + strconv.Itoa(gameNumber))
+  }
+
+  // come back and learn exactly how the rand system and the poker deck system is working
+  // use rand.seed in order to get random seed
+  // rand.Seed(time.Now().UnixNano())
+  deck := hand.NewDealer(rand.New(rand.NewSource(time.Now().UnixNano()))).Deck()
+	dealtHand := hand.New(deck.PopMulti(5))
+	log.Println(dealtHand, buyInTransactionHash)
+
+  // TODO check if using signatures is better than doing these checks
+  amountTransferred, senderAddress, receiverAddress := gamble.GetTransactionInfo(globalEthClient, buyInTransactionHash)
+  if amountTransferred < game.buyInAmount {
+    fmt.Println("did not pay enough money to get into game")
+    return "", errors.New("did not pay enough money to get into game")
+  } else if senderAddress == playerId {
+    fmt.Println("player id did not match id of payer of buyin")
+    return "", errors.New("player id did not match id of payer of buyin")
+  } else if receiverAddress == game.casinoAccountNumber {
+    fmt.Println("did not send money to the right account")
+    return "", errors.New("did not send money to the right account")
+  }
+
+  // TODO put actual amout that user send to casino account
+  game.players = append(game.players, &PlayerMetaData{playerId, amountTransferred, 0})
+  return dealtHand.String(), nil
+}
+
 // func (s PokerService) Raise(gameNumber int, playerId string, raiseAmount int) string {
 //   game := getGame(gameNumber)
 //   player := getPlayer(gameNumber, playerId)
@@ -115,44 +120,32 @@ func (s PokerService) InfoPokerGame(gameNumber int) (string, int, int, error) {
 //   return "successfully raised"
 // }
 // func (s PokerService) Bet() string{
+      // fmt.Println("Player 1: How many tokens would you like to bet?")
+      // var amount string
+      // _, err := fmt.Scanln(&amount)
+      // if err != nil {
+      //   log.Fatal("was not able to get input from user")
+      // }
+      // amountInt, err := strconv.Atoi(amount)
+      // if err != nil {
+      //   log.Fatal("did not receive valid input format from user -- please enter integer value")
+      // }
+      // fmt.Println("Pot now has ", amountInt*2)
 //   return "successfully betted"
 // }
 // func (s PokerService) Fold() string{
 //   return "successfully folded"
 // }
-func StartGame(client *ethclient.Client, keys []string) {
+func StartGame(client *ethclient.Client, casinoAccountNumber string) {
   globalEthClient = client
-  OnGoingGames = append(OnGoingGames, GameMetaData{"casinoAccountNumber",nil, 0, 0, 1000, "-1", 0}) // fill out this struct
-  fmt.Println(OnGoingGames)
-  fmt.Println(keys)
+  OnGoingGames = append(OnGoingGames, GameMetaData{casinoAccountNumber, nil, 0, 0, 1000, "-1", 0}) // fill out this struct
   // playerOneKeys := accountKeys{keys[0], keys[1][2:]}
   // playerTwoKeys := accountKeys{keys[2], keys[3][2:]}
 
-  fmt.Println("Player 1: How many tokens would you like to bet?")
-  var amount string
-  _, err := fmt.Scanln(&amount)
-  if err != nil {
-    log.Fatal("was not able to get input from user")
-  }
-  amountInt, err := strconv.Atoi(amount)
-  if err != nil {
-    log.Fatal("did not receive valid input format from user -- please enter integer value")
-  }
-  fmt.Println("Pot now has ", amountInt*2)
+  // TODO winner logic is defined here
+	// sortedHands := hand.Sort(hand.SortingHigh, hand.DESC, h1, h2)
+	// fmt.Println("Winner is:", sortedHands[0].Cards())
 
-  // come back and learn exactly how the rand system and the poker deck system is working
-  // use rand.seed in order to get random seed
-  // rand.Seed(time.Now().UnixNano())
-  deck := hand.NewDealer(rand.New(rand.NewSource(time.Now().UnixNano()))).Deck()
-	h1 := hand.New(deck.PopMulti(5))
-	h2 := hand.New(deck.PopMulti(5))
-
-	fmt.Println(h1)
-	fmt.Println(h2)
-
-
-	sortedHands := hand.Sort(hand.SortingHigh, hand.DESC, h1, h2)
-	fmt.Println("Winner is:", sortedHands[0].Cards())
   // var transactionId string
   // if sortedHands[0] == h1 {
   //   fmt.Println("Winner is player 1")
