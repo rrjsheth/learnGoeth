@@ -1,14 +1,15 @@
+// this file should only contain the business logic of the service
 package gameLogic
 
 import (
   "fmt"
   "log"
-  "strconv"
   "math/rand"
   "time"
-
-  "poker/gamble"
-  "poker/balance"
+  "errors"
+  "strconv"
+  // "poker/gamble"
+  // "poker/balance"
   "github.com/notnil/joker/hand"
   "github.com/ethereum/go-ethereum/ethclient"
 
@@ -17,11 +18,115 @@ type accountKeys struct {
   public string
   private string
 }
+
+type GameMetaData struct {
+  casinoAccountNumber string
+  players [](*PlayerMetaData)
+  gameNumber int
+  totalPotMoney int
+  buyInAmount int
+  turn string
+  latestBetValue int
+}
+
+type PlayerMetaData struct {
+  playerId string
+  moneyLeft int
+  currentBet int
+}
+
+type PokerService struct {}
+
+var OnGoingGames []GameMetaData
+var globalEthClient *ethclient.Client
+
+func getGame(gameNumber int) *GameMetaData {
+  for _, game := range OnGoingGames {
+    if gameNumber == game.gameNumber {
+      return &game
+    }
+  }
+    return nil
+}
+
+// func getPlayer(gameNumber int, playerId string) *PlayerMetaData {
+//   game := getGame(gameNumber)
+//   for _, player := range game.players {
+//     if playerId == player.playerId {
+//       return &player
+//     }
+//   }
+//     return nil
+// }
+
+func (s PokerService) InfoPokerGame(gameNumber int) (string, int, int, error) {
+  game := getGame(gameNumber)
+  if game == nil {
+    return "", -1, 0, errors.New("Did not find gameNumber" + strconv.Itoa(gameNumber) )
+  }
+  return game.casinoAccountNumber, game.gameNumber, game.buyInAmount, nil
+}
+
+// check if the user has paid his buy in to get into the game
+// what is the player's id
+// need to return the hand to start playing, the other has to be errors to return
+// func (s PokerService) JoinPokerGame(buyInTransactionHash string, playerId string, gameNumber string) string {
+//   game := getGame(gameNumber)
+//   if game == nil {
+//     fmt.Println("did nto find that game; number provided does not exist", gameNumber)
+//     return "did nto find that game; number provided does not exist" + strconv.Itoa(gameNumber)
+//   }
+//
+//   deck := hand.NewDealer(rand.New(rand.NewSource(time.Now().UnixNano()))).Deck()
+// 	dealtHand := hand.New(deck.PopMulti(5))
+// 	fmt.Println(dealtHand)
+//   return dealtHand
+//
+//   amountTransferred, senderAddress, receiverAddress := gamble.GetTransactionInfo(globalEthClient, buyInTransactionHash)
+//   if amountTransferred < game.buyInAmount {
+//     fmt.Println("did not pay enough money to get into game")
+//     return "did not pay enough money to get into game"
+//   } else if senderAddress == playerId {
+//     fmt.Println("player id did not match id of payer of buyin")
+//     return "player id did not match id of payer of buyin"
+//   } else if receiverAddress == game.casinoAccountNumber {
+//     fmt.Println("did not send money to the right account")
+//     return "did not send money to the right account"
+//   }
+//
+//   game.players = append(game.players, PlayerMetaData{playerId, amountTransferred})
+//   return "successfully joined game"
+// }
+// func (s PokerService) Raise(gameNumber int, playerId string, raiseAmount int) string {
+//   game := getGame(gameNumber)
+//   player := getPlayer(gameNumber, playerId)
+//   if game == nil {
+//     return "", -1, 0, errors.New("Did not find gameNumber" + strconv.Itoa(gameNumber) )
+//   }
+//   newLatestBetAmount := player.currentBet + raiseAmount
+//   if player.moneyLeft < newLatestBetAmount {
+//     return "You do not have enough money to raise " + strconv.Itoa(raiseAmount)
+//   }
+//   if newLatestBetAmount < game.latestBetValue {
+//     return fmt.Sprintf("you need to raise at least %d\nwe received request for only %d",game.latestBetValue-player.currentBet , raiseAmount)
+//   }
+//
+//   // TODO raise the actual amount
+//   return "successfully raised"
+// }
+// func (s PokerService) Bet() string{
+//   return "successfully betted"
+// }
+// func (s PokerService) Fold() string{
+//   return "successfully folded"
+// }
 func StartGame(client *ethclient.Client, keys []string) {
-  playerOneKeys := accountKeys{keys[0], keys[1][2:]}
-  playerTwoKeys := accountKeys{keys[2], keys[3][2:]}
-  fmt.Println(playerOneKeys)
-  fmt.Println(playerTwoKeys)
+  globalEthClient = client
+  OnGoingGames = append(OnGoingGames, GameMetaData{"casinoAccountNumber",nil, 0, 0, 1000, "-1", 0}) // fill out this struct
+  fmt.Println(OnGoingGames)
+  fmt.Println(keys)
+  // playerOneKeys := accountKeys{keys[0], keys[1][2:]}
+  // playerTwoKeys := accountKeys{keys[2], keys[3][2:]}
 
   fmt.Println("Player 1: How many tokens would you like to bet?")
   var amount string
@@ -45,19 +150,21 @@ func StartGame(client *ethclient.Client, keys []string) {
 	fmt.Println(h1)
 	fmt.Println(h2)
 
-  
+
 	sortedHands := hand.Sort(hand.SortingHigh, hand.DESC, h1, h2)
 	fmt.Println("Winner is:", sortedHands[0].Cards())
-  if sortedHands[0] == h1 {
-    fmt.Println("Winner is player 1")
-    gamble.TransferTokens(client, playerTwoKeys.private, playerOneKeys.public, amountInt)
-  } else {
-    fmt.Println("Winner is player 2")
-    gamble.TransferTokens(client, playerOneKeys.private, playerTwoKeys.public, amountInt)
-  }
-
-  fmt.Println("balance of player 1", balance.Balance(client, playerOneKeys.public))
-  fmt.Println("balance of player 2", balance.Balance(client, playerTwoKeys.public))
+  // var transactionId string
+  // if sortedHands[0] == h1 {
+  //   fmt.Println("Winner is player 1")
+  //   transactionId = gamble.TransferTokens(client, playerTwoKeys.private, playerOneKeys.public, amountInt)
+  // } else {
+  //   fmt.Println("Winner is player 2")
+  //   transactionId = gamble.TransferTokens(client, playerOneKeys.private, playerTwoKeys.public, amountInt)
+  // }
+  //
+  // fmt.Println("balance of player 1", balance.Balance(client, playerOneKeys.public))
+  // fmt.Println("balance of player 2", balance.Balance(client, playerTwoKeys.public))
+  // gamble.GetTransactionInfo(globalEthClient, transactionId)
 }
 
 // expose api to bet and to get balance

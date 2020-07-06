@@ -12,9 +12,20 @@ import (
   "github.com/ethereum/go-ethereum/ethclient"
 )
 
-func TransferTokens(client *ethclient.Client, privateSourceAddr string, publicDestAddr string, betAmount int)  {
-  fmt.Println("amount bet has been", betAmount)
+func GetTransactionInfo(client *ethclient.Client, transactionHash string) ( amountTransferred *big.Int, senderAddress *common.Address, receiverAddress *common.Address) {
+  transactionDetails, isPending, err := client.TransactionByHash(context.Background(), common.HexToHash(transactionHash))
+  if err != nil {
+    log.Fatal("error wihle trying to get transaction", err)
+  }
 
+  amountTransferred = transactionDetails.Value()
+  senderAddress = transactionDetails.To() // transactionDetails.From()
+  receiverAddress = transactionDetails.To()
+  fmt.Println("transaction pending?", isPending)
+  return
+}
+
+func TransferTokens(client *ethclient.Client, privateSourceAddr string, publicDestAddr string, betAmount int) string {
   privateKey, err := crypto.HexToECDSA(privateSourceAddr)
   if err != nil {
     log.Fatal(err)
@@ -55,4 +66,6 @@ func TransferTokens(client *ethclient.Client, privateSourceAddr string, publicDe
 	}
 
 	fmt.Printf("Sent %s wei to %s: %s\n", value.String(), toAddress.Hex(), signedTx.Hash().Hex())
+  fmt.Println("hash value", signedTx.Hash())
+  return signedTx.Hash().Hex()
 }
