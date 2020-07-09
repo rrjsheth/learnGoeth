@@ -1,17 +1,20 @@
-// this file should only contain the interface
+// Package gameLogic this file should only contain the interface
 package gameLogic
+
 //
 // import (
 //   "errors"
 // )
 
+// PokerGameService exported
 type PokerGameService interface {
-  JoinPokerGame(string, string, int) string
-  InfoPokerGame(int) (string, int, int, error)
-  // Raise(int, string, int) string
-  // Call() ()
-  // Bet() string
-  // Fold() string
+	JoinPokerGame(string, string, int) string
+	InfoPokerGame(int) (string, int, int, error)
+	// Raise(int, string, int) string
+	// Call() ()
+	Call(int, string, int, bool) (string, error)
+	Bet(int, string, int, bool) (string, error)
+	// Fold() string
 }
 
 // type joinPokerGameRequest struct {
